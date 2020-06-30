@@ -77,3 +77,13 @@ function runStart() {
     });
 };
 
+//view all employees and join tables to show department and salary
+function viewAllEmployees() {
+    const query = "SELECT e.id, e.first_name, e.last_name, r.title, r.salary FROM employee AS e INNER JOIN role AS r ON e.role_id = r.id";
+    connection.query(query, (err, res) => {
+        console.table(res);
+        runStart();
+    });
+
+};
+//INNER JOIN department AS d ON r.department_id = d.id"
