@@ -20,6 +20,11 @@ const connection = mysql.createConnection({
     database: "employee_db"
 });
 
+//arrays to hold departments, managers, and roles
+let dept = [];
+let managers = [];
+let roles = [];
+
 // connect to the mysql server and sql database
 connection.connect(function (err) {
     if (err) throw err;
@@ -37,8 +42,9 @@ connection.connect(function (err) {
 
 
 function runStart() {
-
-    return inquirer.prompt([
+    getDepartments();
+    getRoles();
+    inquirer.prompt([
         {
             type: "list",
             name: "action",
@@ -72,6 +78,7 @@ function runStart() {
         }
         else if (selectedAction.action === "Exit") {
             console.log("Have a nice day, goodbye.");
+            process.exit();
             return;
         }
     });
@@ -84,6 +91,63 @@ function viewAllEmployees() {
         console.table(res);
         runStart();
     });
-
 };
-//INNER JOIN department AS d ON r.department_id = d.id"
+//view employees by Department
+function viewEmpbyDept() {
+    inquirer.prompt([
+
+        {
+            type: "list",
+            name: "department",
+            message: "What department would you like to view?",
+            choices: dept
+
+        }
+    ]).then(selection => {
+
+        const query = `SELECT
+        e.id,
+        e.first_name,
+        e.last_name,
+        r.title,
+        department_name.department,
+        CONCAT(m.first_name, " ", m.last_name) as "manager"
+    FROM
+        employee AS e
+    INNER JOIN
+        role AS r
+      ON e.role_id = r.id
+    INNER JOIN
+        department
+      ON r.department_id = department.id
+    LEFT OUTER JOIN e m
+      ON e.manager_id = m.id
+    WHERE department = "${selection.department_name}"`
+        connection.query(query, (err, res) => {
+            console.table(res);
+            runStart();
+        });
+    });
+};
+
+function getDepartments() {
+    const query = "SELECT department_name FROM department"
+    connection.query(query, (err, res) => {
+        dept = [];
+        for (let i = 0; i < res.length; i++) {
+            const department = res[i].department_name;
+            dept.push(department);
+        }
+    })
+};
+
+function getRoles() {
+    const query = "SELECT title FROM role"
+    connection.query(query, (err, res) => {
+        roles = [];
+        for (let i = 0; i < res.length; i++) {
+            const role = res[i].title;
+            roles.push(role);
+        }
+    })
+};
