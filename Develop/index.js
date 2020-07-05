@@ -86,7 +86,15 @@ function runStart() {
 
 //view all employees and join tables to show department and salary
 function viewAllEmployees() {
-    const query = "SELECT e.id, e.first_name, e.last_name, r.title, r.salary FROM employee AS e INNER JOIN role AS r ON e.role_id = r.id";
+    const query = `SELECT 
+        e.id, 
+        e.first_name, 
+        e.last_name, 
+        r.title, 
+        r.salary 
+    FROM 
+        employee AS e 
+    INNER JOIN role AS r ON e.role_id = r.id`;
     connection.query(query, (err, res) => {
         console.table(res);
         runStart();
@@ -105,24 +113,11 @@ function viewEmpbyDept() {
         }
     ]).then(selection => {
 
-        const query = `SELECT
-        e.id,
-        e.first_name,
-        e.last_name,
-        r.title,
-        department_name.department,
-        CONCAT(m.first_name, " ", m.last_name) as "manager"
-    FROM
-        employee AS e
-    INNER JOIN
-        role AS r
-      ON e.role_id = r.id
-    INNER JOIN
-        department
-      ON r.department_id = department.id
-    LEFT OUTER JOIN e m
-      ON e.manager_id = m.id
-    WHERE department = "${selection.department_name}"`
+        const query = "SELECT e.id, e.first_name, e.last_name, r.title, department.department_name, FROM employee AS e INNER JOIN role AS r ON e.role_id = r.id INNER JOIN department ON r.department_id = department.id WHERE department.department_name = ?", [
+            {
+                
+            }
+        ]
         connection.query(query, (err, res) => {
             console.table(res);
             runStart();
