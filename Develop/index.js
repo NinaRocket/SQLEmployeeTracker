@@ -49,7 +49,7 @@ function runStart() {
             message: "What would you like to do?",
             choices: ["View All Employees",
                 "View All Departments",
-                "View All Employees by Manager", "Add Employee", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Exit"],
+                "View All Managers", "Add Employee", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Exit"],
 
         }
     ]).then(selectedAction => {
@@ -92,7 +92,8 @@ function viewAllEmployees() {
         r.salary 
     FROM 
         employee AS e 
-    INNER JOIN role AS r ON e.role_id = r.id`;
+    INNER JOIN role AS r 
+    ON e.role_id = r.id`;
     connection.query(query, (err, res) => {
         console.table(res);
         runStart();
@@ -121,28 +122,34 @@ function viewAllEmployees() {
 //     })
 // };
 function viewAllDept() {
-    connection.query(`
-    SELECT department_name, department_id 
-    FROM department `,
-        function (err, res) {
-            console.table(res);
-            runStart();
-        })
+    const query = `SELECT 
+    d.department_name, 
+    d.department.id 
+    FROM department AS d`
+    connection.query(query, (err, res) => {
+        console.table(res);
+        runStart();
+    });
 };
 
 function viewAllManagers() {
-    connection.query(`
-    SELECT e.first_name, e.last_name, e.manager_id, r.role_title, role_salary, department_name 
+    const query = `
+    SELECT e.first_name, 
+    e.last_name, 
+    e.manager_id, 
+    r.role_title, 
+    r.salary, 
+    d.department_name 
     FROM employee AS e
     INNER JOIN role AS r
-    ON r.id = e.role_id
-    INNER JOIN department
-    ON r.department_id = department.id 
-    ORDER BY e.manager_id`,
-        function (err, res) {
-            console.table(res);
-            runStart();
-        })
+    ON e.role_id = r.id
+    INNER JOIN department AS d
+    ON r.department_id = d.id 
+    ORDER BY e.manager_id`
+    connection.query(query, (err, res) => {
+        console.table(res);
+        runStart();
+    });
 };
 
 function getDepartments() {
