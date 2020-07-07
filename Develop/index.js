@@ -11,10 +11,8 @@ const connection = mysql.createConnection({
 
     // Your port; if not 3306
     port: 3306,
-
     // Your username
     user: "root",
-
     // Your password
     password: "password",
     database: "employee_db"
@@ -50,7 +48,7 @@ function runStart() {
             name: "action",
             message: "What would you like to do?",
             choices: ["View All Employees",
-                "View All Employees by Department",
+                "View All Departments",
                 "View All Employees by Manager", "Add Employee", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Exit"],
 
         }
@@ -58,11 +56,11 @@ function runStart() {
         if (selectedAction.action === "View All Employees") {
             viewAllEmployees();
         }
-        else if (selectedAction.action === "View All Employees by Department") {
-            viewEmpbyDept();
+        else if (selectedAction.action === "View All Departments") {
+            viewAllDept();
         }
-        else if (selectedAction.action === "View All Employees by Manager") {
-            viewEmpbyMan();
+        else if (selectedAction.action === "View All Managers") {
+            viewAllManagers();
         }
         else if (selectedAction.action === "Add Employee") {
             addEmployee();
@@ -81,7 +79,7 @@ function runStart() {
             process.exit();
             return;
         }
-    });
+    })
 };
 
 //view all employees and join tables to show department and salary
@@ -100,29 +98,51 @@ function viewAllEmployees() {
         runStart();
     });
 };
-//view employees by Department
-function viewEmpbyDept() {
-    inquirer.prompt([
+//view employees by Department - I want to make this work in the future
+// function viewEmpbyDept() {
+//     inquirer.prompt([
 
-        {
-            type: "list",
-            name: "department",
-            message: "What department would you like to view?",
-            choices: dept
+//         {
+//             type: "list",
+//             name: "department",
+//             message: "What department would you like to view?",
+//             choices: dept
 
-        }
-    ]).then(selection => {
+//         }
+//     ]).then((selection) => {
 
-        const query = "SELECT e.id, e.first_name, e.last_name, r.title, department.department_name, FROM employee AS e INNER JOIN role AS r ON e.role_id = r.id INNER JOIN department ON r.department_id = department.id WHERE department.department_name = ?", [
-            {
-                
-            }
-        ]
-        connection.query(query, (err, res) => {
+
+//         const query = `SELECT e.id, e.first_name, e.last_name, r.title, department.department_name, FROM employee AS e INNER JOIN role AS r ON e.role_id = r.id INNER JOIN department ON r.department_id = department.id WHERE department = "${selection.department}"`
+//         connection.query(query, (err, res) => {
+//             console.table(res);
+//             console.log(selection.department);
+//             runStart();
+//         })
+//     })
+// };
+function viewAllDept() {
+    connection.query(`
+    SELECT department_name, department_id 
+    FROM department `,
+        function (err, res) {
             console.table(res);
             runStart();
-        });
-    });
+        })
+};
+
+function viewAllManagers() {
+    connection.query(`
+    SELECT e.first_name, e.last_name, e.manager_id, r.role_title, role_salary, department_name 
+    FROM employee AS e
+    INNER JOIN role AS r
+    ON r.id = e.role_id
+    INNER JOIN department
+    ON r.department_id = department.id 
+    ORDER BY e.manager_id`,
+        function (err, res) {
+            console.table(res);
+            runStart();
+        })
 };
 
 function getDepartments() {
@@ -135,6 +155,7 @@ function getDepartments() {
         }
     })
 };
+
 
 function getRoles() {
     const query = "SELECT title FROM role"
