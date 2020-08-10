@@ -18,7 +18,7 @@ const connection = mysql.createConnection({
 
 //arrays to hold departments, managers, and roles
 let dept = [];
-let managers = [" "];
+let managers = [];
 let roles = [];
 
 // connect to the mysql server and sql database
@@ -40,7 +40,8 @@ connection.connect(function (err) {
 function runStart() {
     getDepartments();
     getRoles();
-    //getManagers(); 
+    getManagers(); 
+   
     inquirer.prompt([
         {
             type: "list",
@@ -48,7 +49,7 @@ function runStart() {
             message: "What would you like to do?",
             choices: ["View All Employees",
                 "View All Departments", "View All Employees by Department", "View Employees by Role",
-                "View All Managers", "Add Employee", "Add Department", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Exit"],
+                "View All Managers", "Add Employee", "Add Department", "Add Role", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Exit"],
 
         }
     ]).then(selectedAction => {
@@ -72,6 +73,9 @@ function runStart() {
         }
         else if(selectedAction.action === "Add Department"){
             addDepartment(); 
+        }
+        else if (selectedAction.action === "Add Role") {
+            addRole();
         }
         else if (selectedAction.action === "Remove Employee") {
             removeEmployee();
@@ -180,7 +184,7 @@ function viewAllDept() {
     });
 };
 
-
+//add an employee
 function addEmployee(){
     inquirer.prompt([
         {
@@ -211,7 +215,7 @@ function addEmployee(){
         {
             title: selection.role
         },
-    (err, res)=> {
+        (err, res)=> {
         const role = res[0].id;
         let manager;
         const name = selection.manager.split(" ")
@@ -252,10 +256,10 @@ function addDepartment() {
       type: "input",
       name: "addDept",
       message: "What is the name of the new Department?"
-    }).then(function (answer) {
+    }).then(function (selection) {
       //let query = "INSERT INTO department SET ?";
       connection.query("INSERT INTO department SET ?",
-       { department_name: `${answer.addDept}` }, 
+       { department_name: `${selection.addDept}` }, 
        (err) =>{
         if (err) throw err;
         console.log("Department added!");
@@ -263,6 +267,47 @@ function addDepartment() {
       });
     });
   };
+
+
+  function addRole() {
+  
+      inquirer.prompt([{
+        type: "list",
+        name: "addDept",
+        message: "What department does this role belong to?",
+        choices: dept
+      },
+      {
+        type: "input",
+        name: "addRole",
+        message: "What is the name of this new role?",
+      },
+      {
+        type: "input",
+        name: "addSalary",
+        message: "What is the salary?",
+      },
+      ]).then((selection)=> {
+        connection.query(`SELECT id FROM department WHERE department_name = "${selection.addDept}"`,
+        (err, res)=>{
+            const depart = res[0].id;
+        
+        connection.query("INSERT INTO role SET ?", 
+        {   title: selection.addRole, 
+            salary: selection.addSalary, 
+            department_id: depart
+        },
+         (err) =>{
+          if (err) throw err;
+          console.log("Role added!");
+          runStart();
+        })
+    
+      });
+    });
+  };
+  
+
 
 //get departments
 function getDepartments() {
@@ -291,15 +336,13 @@ function getRoles() {
 //function that retrieves Managers, need get managers working
 function getManagers() {
     const query =
-    `SELECT DISTINCT manager
-    FROM (
-    SELECT
+    `SELECT DISTINCT manager FROM (SELECT
         employee.id,
         employee.first_name,
         employee.last_name,
         role.title,
         role.salary,
-        department.department_id,
+        role.department_id,
         CONCAT(m.first_name, " ", m.last_name) as "manager"
     FROM
         employee
@@ -313,10 +356,13 @@ function getManagers() {
       ON employee.manager_id = m.id
     ) m`
     connection.query(query, (err, res) => {
-        managers = [" "]
+        managers = [];
         for (let i = 0; i < res.length; i++) {
             const manager = res[i].manager;
             managers.push(manager);
+            
         }
+        console.log(managers); 
     })
 };
+
